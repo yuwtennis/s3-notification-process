@@ -1,0 +1,25 @@
+# SAM build artifacts
+.aws-sam/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Poetry
+# poetry.lock should be committed — do not ignore it
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+
+# AWS credentials / local config
+.env
+*.env.local

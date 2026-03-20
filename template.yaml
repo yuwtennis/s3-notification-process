@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: S3 notification processor
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 128
+    Runtime: python3.12
+    Environment:
+      Variables:
+        LOG_LEVEL: INFO
+
+Parameters:
+  BucketNameSecretId:
+    Type: String
+    Description: Secrets Manager secret ID whose SecretString contains the S3 bucket name
+    Default: s3-notification-process/bucket-name
+
+Resources:
+  S3ProcessorFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: src/
+      Handler: handlers.s3_processor.lambda_handler
+      Description: Processes S3 event notifications
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref S3Bucket
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref S3Bucket
+            Events:
+              - s3:ObjectCreated:*
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    # https://docs.aws.amazon.com/secretsmanager/latest/userguide/cfn-example_reference-secret.html
+    Properties:
+      BucketName: !Sub "{{resolve:secretsmanager:${BucketNameSecretId}:SecretString:bucket_name}}"
+
+Outputs:
+  S3ProcessorFunction:
+    Description: Lambda function ARN
+    Value: !GetAtt S3ProcessorFunction.Arn
+  S3BucketName:
+    Description: S3 bucket name
+    Value: !Ref S3Bucket
