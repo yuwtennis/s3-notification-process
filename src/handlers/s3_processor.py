@@ -12,22 +12,24 @@ s3_client = boto3.client("s3")
 
 
 def lambda_handler(event: dict, context) -> dict:
-    """Process S3 event notifications."""
+    """Process S3 event notifications delivered via SQS."""
     logger.info("Received event: %s", json.dumps(event))
 
-    records = event.get("Records", [])
+    sqs_records = event.get("Records", [])
     processed = []
 
-    for record in records:
-        bucket = record["s3"]["bucket"]["name"]
-        key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
-        size = record["s3"]["object"].get("size", 0)
-        event_name = record["eventName"]
+    for sqs_record in sqs_records:
+        s3_event = json.loads(sqs_record["body"])
+        for record in s3_event.get("Records", []):
+            bucket = record["s3"]["bucket"]["name"]
+            key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
+            size = record["s3"]["object"].get("size", 0)
+            event_name = record["eventName"]
 
-        logger.info("Processing %s: s3://%s/%s (%d bytes)", event_name, bucket, key, size)
+            logger.info("Processing %s: s3://%s/%s (%d bytes)", event_name, bucket, key, size)
 
-        result = process_object(bucket, key)
-        processed.append(result)
+            result = process_object(bucket, key)
+            processed.append(result)
 
     return {"statusCode": 200, "body": json.dumps({"processed": len(processed)})}
 

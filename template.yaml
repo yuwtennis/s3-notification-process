@@ -12,10 +12,14 @@ Globals:
         LOG_LEVEL: INFO
 
 Parameters:
-  BucketNameSecretId:
+  QueueArnSecretId:
     Type: String
-    Description: Secrets Manager secret ID whose SecretString contains the S3 bucket name
-    Default: s3-notification-process/bucket-name
+    Description: Secrets Manager secret ID whose SecretString contains the SQS queue ARN
+    Default: s3-notification-process/queue-arn
+  RoleArnSecretId:
+    Type: String
+    Description: Secrets Manager secret ID whose SecretString contains the Lambda execution role ARN
+    Default: s3-notification-process/role-arn
 
 Resources:
   S3ProcessorFunction:
@@ -26,27 +30,15 @@ Resources:
       CodeUri: .
       Handler: handlers.s3_processor.lambda_handler
       Description: Processes S3 event notifications
-      Policies:
-        - S3ReadPolicy:
-            BucketName: !Ref S3Bucket
+      Role: !Sub "{{resolve:secretsmanager:${RoleArnSecretId}:SecretString:role_arn}}"
       Events:
-        S3Event:
-          Type: S3
+        SQSEvent:
+          Type: SQS
           Properties:
-            Bucket: !Ref S3Bucket
-            Events:
-              - s3:ObjectCreated:*
-
-  S3Bucket:
-    Type: AWS::S3::Bucket
-    # https://docs.aws.amazon.com/secretsmanager/latest/userguide/cfn-example_reference-secret.html
-    Properties:
-      BucketName: !Sub "{{resolve:secretsmanager:${BucketNameSecretId}:SecretString:bucket_name}}"
+            Queue: !Sub "{{resolve:secretsmanager:${QueueArnSecretId}:SecretString:queue_arn}}"
+            BatchSize: 10
 
 Outputs:
   S3ProcessorFunction:
     Description: Lambda function ARN
     Value: !GetAtt S3ProcessorFunction.Arn
-  S3BucketName:
-    Description: S3 bucket name
-    Value: !Ref S3Bucket

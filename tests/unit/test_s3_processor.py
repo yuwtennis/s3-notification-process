@@ -7,8 +7,8 @@ from src.handlers.s3_processor import lambda_handler, process_object
 
 
 @pytest.fixture
-def s3_event():
-    with open("events/s3-event.json") as f:
+def sqs_event():
+    with open("events/sqs-event.json") as f:
         return json.load(f)
 
 
@@ -20,10 +20,10 @@ def lambda_context():
     return context
 
 
-def test_lambda_handler_returns_200(s3_event, lambda_context):
+def test_lambda_handler_returns_200(sqs_event, lambda_context):
     with mock.patch("src.handlers.s3_processor.s3_client") as mock_s3:
         mock_s3.head_object.return_value = {"Metadata": {}}
-        response = lambda_handler(s3_event, lambda_context)
+        response = lambda_handler(sqs_event, lambda_context)
 
     assert response["statusCode"] == 200
     body = json.loads(response["body"])
@@ -32,6 +32,20 @@ def test_lambda_handler_returns_200(s3_event, lambda_context):
 
 def test_lambda_handler_empty_records(lambda_context):
     event = {"Records": []}
+    response = lambda_handler(event, lambda_context)
+    assert response["statusCode"] == 200
+    assert json.loads(response["body"])["processed"] == 0
+
+
+def test_lambda_handler_empty_s3_records_in_sqs(lambda_context):
+    event = {
+        "Records": [
+            {
+                "body": json.dumps({"Records": []}),
+                "eventSource": "aws:sqs",
+            }
+        ]
+    }
     response = lambda_handler(event, lambda_context)
     assert response["statusCode"] == 200
     assert json.loads(response["body"])["processed"] == 0
