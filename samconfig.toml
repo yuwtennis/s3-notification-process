@@ -1,0 +1,19 @@
+[default]
+[default.global.parameters]
+stack_name = "s3-notification-process"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+region = "us-east-1"
+
+[default.local_invoke.parameters]
+warm_containers = "EAGER"
