@@ -15,6 +15,8 @@ def lambda_handler(event: dict, context) -> dict:
     """Process S3 event notifications delivered via SQS."""
     logger.info("Received event: %s", json.dumps(event))
 
+    # Record schema
+    # https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html
     sqs_records = event.get("Records", [])
     processed = []
 
