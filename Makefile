@@ -23,11 +23,13 @@ local-api:
 
 # ── SAM makefile build hook (called by `sam build` for each function) ─────────
 # ARTIFACTS_DIR is set by SAM to the staging directory for the function package.
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/building-custom-runtimes.html
 
 build-S3ProcessorFunction:
 	poetry export -f requirements.txt --without-hashes -o $(ARTIFACTS_DIR)/requirements.txt
 	pip install -r $(ARTIFACTS_DIR)/requirements.txt -t $(ARTIFACTS_DIR) --quiet
-	cp -r handlers $(ARTIFACTS_DIR)/
+	cp -r s3_notification_process $(ARTIFACTS_DIR)/
+	cp -r src/handlers $(ARTIFACTS_DIR)/
 
 # ── Development ───────────────────────────────────────────────────────────────
 

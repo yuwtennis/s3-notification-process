@@ -23,7 +23,7 @@ Resources:
     Metadata:
       BuildMethod: makefile
     Properties:
-      CodeUri: src/
+      CodeUri: .
       Handler: handlers.s3_processor.lambda_handler
       Description: Processes S3 event notifications
       Policies:
